@@ -3,28 +3,66 @@ from networkx import *
 from matplotlib.pyplot import *
 
 
-
 def prim(g: Graph) -> Graph:
     fg = Graph()
     node_list = []
-    check: bool = True
     #edgs = sorted(g.edges, keys=g.edges.values(), reverse=True)
+    all_edges = []
+    conflict: dict[str: list[str]] = dict()
+    for i in g.nodes():
+        conflict[i] = []
     for i in g.edges.items():
+        all_edges.append(i)
+    all_edges.sort(key= lambda item: item[1]['weight'])
+    new_card: list[tuple[str, str, int]] = []
+    for e in all_edges:
+        print(e)
+        if conflict[e[0][0]] == None or conflict[e[0][1]] == None or ((conflict[e[0][0]]).count(e[0][0]) < 2 and (conflict[e[0][1]]).count(e[0][1]) < 2 and (e[0][0] not in conflict[e[0][1]] and e[0][1] not in conflict[e[0][0]])):
+            print(e[0][0])
+            print(e[0][1])
+
+            conflict[e[0][0]].append(e[0][1])
+            conflict[e[0][1]].append(e[0][0])
+            for i in conflict[e[0][0]]:
+                conflict[e[0][1]].append(i)
+            for i in conflict[e[0][1]]:
+                conflict[e[0][0]].append(i)
+
+            print(conflict)
+            print("=================================")
+            compactor: tuple[str, str, int] = (e[0][0], e[0][1], e[1]['weight'])
+            new_card.append(compactor)
+
+    for i in node_list:
         print(i)
-    while(check):
+    new_card.pop()
+    fg.add_weighted_edges_from(new_card)
+    return fg
 
-        tmp_int = [0, ("", "")]
-        for e in g.edges.items():
-            if tmp_int[0] > e[1]:
-                tmp_int[0] = e[1]
-                tmp_int[1] = e[0]
 
-        if not(tmp_int[1][0] in node_list and tmp_int[1][1] in node_list):
-            node_list.append(tmp_int[1][0]) if tmp_int[1][0] not in node_list else None
-            node_list.append(tmp_int[1][1]) if tmp_int[1][1] not in node_list else None
-            fg.add_edges_from(tmp_int[1], weight=tmp_int[0])
-        else:
-            check = False
+def kruscul(g: Graph) -> Graph:
+    print("<<<<<<<<<<<<<<<<<<<<<<<<<<<<")
+    fg: Graph = Graph()
+    all_edges = []
+    conflict: list = []
+    for n in g:
+        for e in g.edges(n):
+            print(e)
+            ce = [(e[0], e[1]), {'weight': g.get_edge_data(e[0], e[1]).get('weight')}]
+            all_edges.append(ce) if ce[0][0] not in conflict and ce[0][1] not in conflict else None
+        print(all_edges)
+        try:
+            me = min(all_edges, key=lambda item: item[1]['weight'])
+            print(me)
+            fg.add_edge(me[0][0], me[0][1], weight=me[1]['weight'])
+            g.add_edge(me[0][0], me[0][1])
+        except:
+            me = None
+        conflict.append(n)
+        print(conflict)
+        all_edges = []
+    for i in fg.edges.items():
+        print(i)
     return fg
 
 
@@ -103,6 +141,13 @@ if __name__ == "__main__":
     axis('off')
     show()
 
+    kruscul_graph = kruscul(graph)
+    draw_networkx(kruscul_graph, pos, with_labels=True, **options)
+    edge_labels = get_edge_attributes(kruscul_graph, 'weight')
+    draw_networkx_edge_labels(kruscul_graph, pos, edge_labels=edge_labels)
+    margins(0.1)
+    axis('off')
+    show()
 
 
 
